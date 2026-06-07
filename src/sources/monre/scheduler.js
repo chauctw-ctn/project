@@ -83,9 +83,7 @@ function scheduleMonreJobs(overrides = {}) {
             if (db) {
                 await dbReady;
                 // Làm phẳng dữ liệu dạng mảng cột dọc thích ứng DB quan hệ
-                const rows = latestNormalized.flatMap((payload) =>
-                    flattenMonrePayload({ ...payload, ts: savedTs })
-                );
+                const rows = latestNormalized.flatMap((payload) => flattenMonrePayload(payload));
 
                 if (rows.length) {
                     await insertRows(db, rows);

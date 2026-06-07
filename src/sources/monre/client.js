@@ -220,7 +220,7 @@ function scheduleEveryFiveMinutes(overrides = {}) {
 			return;
 		}
 
-		const normalized = cached.map((payload) => ({ ...payload, ts: saveTs }));
+		const normalized = cached.map((payload) => ({ ...payload }));
 		const ndjson = normalizeToNdjson(normalized);
 		processNdjson(ndjson, overrides.db ? { dbPath: overrides.db } : {})
 			.then(({ inserted }) => {
