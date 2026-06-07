@@ -1,0 +1,27 @@
+{
+  "short_name": "CAWACO",
+  "name": "CAWACO System - Hệ Thống Giám Sát Trạm Đo",
+  "description": "Hệ thống giám sát trực tuyến lưu lượng, áp lực và chất lượng nước mạng lưới cấp nước CAWACO 2026.",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/login.html",
+  "background_color": "#ffffff",
+  "theme-color": "#0066cc",
+  "theme_color": "#0066cc",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["infrastructure", "utilities", "business"],
+  "lang": "vi"
+}

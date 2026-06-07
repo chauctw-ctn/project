@@ -1,0 +1,11 @@
+{
+  "accounts": [
+    {
+      "username": "admin",
+      "password": "password123",
+      "role": "admin"
+    }
+  ],
+  "redirectPath": "/index.html",
+  "token": "demo-token-xyz-123"
+}
