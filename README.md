@@ -43,3 +43,10 @@ Dự án này là một ứng dụng web, có thể là một dịch vụ giám 
 7.  **Giao diện người dùng:** Thư mục `public/` chứa các tệp tĩnh (HTML, CSS, JavaScript, hình ảnh) cho giao diện người dùng. Các tệp như `login.html`, `index.html`, `capacity.html`, `history.html`, `station.html`, `water-quality.html`, `monre.html` cho thấy các trang khác nhau của ứng dụng, có thể liên quan đến giám sát chất lượng nước hoặc trạm quan trắc.
 
 Nhìn chung, ứng dụng thu thập, xử lý, lưu trữ và hiển thị dữ liệu thông qua một giao diện web, với các thành phần được tổ chức rõ ràng cho từng chức năng.
+
+
+
+
+
+
+npm install
