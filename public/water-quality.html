@@ -4,27 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trạm Giám Sát - CAWACO</title>
+
     <link rel="stylesheet" href="/assets/style.css">
     <link rel="stylesheet" href="/shared/layout.css">
+
     <style>
-        /* Tạo background riêng để phân biệt với trang khác */
-        body.page-stations {
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+        :root {
+            --header-height: 70px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .page-content {
+            display: flex;
+            flex-direction: column;
+
+            width: 100%;
+            height: calc(100vh - var(--header-height));
+            margin-top: var(--header-height);
+
+            padding: 0;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .title-section {
+            flex: 0 0 auto;
+            padding: 16px 24px;
+            text-align: center;
+            background: #ffffff;
+            border-bottom: 1px solid #dbeafe;
+            z-index: 1;
+        }
+
+        .title-section h1 {
+            margin: 0;
+            color: #0369a1;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .image-section {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+
+            background-image: url('/baseImageScada.png');
+            background-size: 100% 100%;
+            background-position: left center;
+            background-repeat: no-repeat;
         }
     </style>
 </head>
-<body class="page-stations">
+
+<body>
 
     <div id="layout-container"></div>
 
     <main class="page-content">
-        <h1 style="text-align: center; margin-top: 50px; color: #0369a1;">
-            TRANG CHẤT LƯỢNG NƯỚC - TRẠM GIÁM SÁT CẤP NƯỚC CÀ MAU
-        </h1>
+
+        <div class="title-section">
+            <h1>
+                TRANG DỮ LIỆU GIẤY PHÉP - TRẠM GIÁM SÁT CẤP NƯỚC CÀ MAU
+            </h1>
+        </div>
+
+        <div class="image-section"></div>
+
     </main>
 
     <script src="/shared/layout.js"></script>
     <script src="/shared/nav.js"></script>
     <script src="/shared/header.js"></script>
+
 </body>
 </html>
