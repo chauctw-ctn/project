@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống giám sát SCADA</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Dữ Liệu Giám Sát Trạm SCADA</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Mã Trạm (Station ID)</th>
+                <th>Thời Gian (Timestamp)</th>
+                <th>Thông Số (Parameter)</th>
+                <th>Giá Trị (Value)</th>
+            </tr>
+        </thead>
+        <tbody id="data-table-body1">
+        </tbody>
+    </table>    
+
+    <div class="visual-container" style="display: flex; gap: 30px; margin-top: 40px; justify-content: space-between; align-items: stretch;">
+        
+        <div class="chart-box" style="flex: 1; min-width: 300px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); height: 320px;">
+            <h3 style="margin-top: 0; color: #333; font-family: Arial, sans-serif;">Biểu đồ diễn biến TDS theo thời gian</h3>
+            <canvas id="lineChart"></canvas>
+        </div>
+
+        <button id="btn-test-gauge" style="margin-top: 10px; padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Xoay Kim Ngẫu Nhiên
+        </button>
+
+        <div class="gauge-box" style="width: 350px; background: #0D0D0D; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; display: flex; flex-direction: column; justify-content: center;">
+            <div class="gauge-container" style="width: 100%; max-width: 250px; margin: 0 auto;">
+                <svg data-role="meter" viewBox="35 28 230 260" preserveAspectRatio="xMidYMid meet">
+                    
+                    <g data-role="ruler" transform="rotate(135,150,175)">
+                        <circle r="100" cx="150" cy="175" fill="#0D0D0D"></circle>
+                        <circle data-role="outer" r="100" cx="150" cy="175" stroke="#294273" stroke-width="20" stroke-linecap="round" stroke-dasharray="471.23889803846896 628.3185307179587" fill="none"></circle>
+                        
+                        <circle id="gauge-progress" data-role="inner" r="100" cx="150" cy="175" stroke="#8BC34A" stroke-width="21" stroke-linecap="round" stroke-dasharray="0, 628.31" fill="none" style="transition: stroke-dasharray 0.5s ease-out;"></circle>
+                        
+                        <circle r="85" cx="150" cy="175" stroke="#F2F2F2" stroke-width="2" stroke-dasharray="399 533" fill="none"></circle>
+                    </g>
+                    
+                    <g data-role="rulerNumbers" style="display: none;"></g>
+
+                    <g id="gauge-needle">
+                        <polygon points="150,172 240,175 150,178" fill="#CCD0D9"></polygon>
+                        <circle cx="150" cy="175" r="12" fill="#CCD0D9"></circle>
+                        <circle cx="150" cy="175" r="5" fill="#0D0D0D"></circle>
+                    </g>
+                                        
+                    <text data-role="titleText" fill="#FFFFFF" font-size="22" font-weight="700" font-family="Arial">
+                        <tspan x="150" y="55" text-anchor="middle">CHỈ SỐ pH</tspan>
+                    </text>
+                    <text data-role="textValue" fill="#FFFFFF" font-size="28" font-weight="700" font-family="Arial">
+                        <tspan id="gauge-value" x="150" y="255" text-anchor="middle">0.00</tspan>
+                    </text>
+                    <text data-role="unitsText" fill="#F2F2F2" font-size="18" font-family="Arial">
+                        <tspan x="150" y="210" text-anchor="middle">pH</tspan>
+                    </text>
+                </svg>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

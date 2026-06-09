@@ -1,30 +1,513 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trạm Giám Sát - CAWACO</title>
-    <link rel="stylesheet" href="/assets/style.css">
-    <link rel="stylesheet" href="/shared/layout.css">
-    <style>
-        /* Tạo background riêng để phân biệt với trang khác */
-        body.page-stations {
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Công suất hoạt động - CAWACO</title>
+
+<link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/shared/layout.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #05070A;
+    color: #E5E7EB;
+}
+
+body.page-stations {
+    height: 100vh;
+    overflow: hidden !important;
+    background: radial-gradient(circle at top, #102033 0%, #05070A 55%, #020617 100%);
+}
+
+/* QUAN TRỌNG: ép main nằm trọn viewport */
+main.page-content.capacity-wrap {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0 !important;
+    padding: 6px 8px !important;
+    overflow: hidden !important;
+
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    row-gap: 6px;
+
+    background: transparent;
+}
+
+.capacity-wrap {
+    height: calc(100vh - 60px);
+    padding: 8px 10px;
+    overflow: hidden;
+}
+
+.capacity-title {
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #F8FAFC;
+    font-size: clamp(14px, 1.45vw, 21px);
+    line-height: 1.15;
+    font-weight: 800;
+    text-align: center;
+}
+
+.gauge-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    min-height: 0;
+}
+
+.gauge-box {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    background: linear-gradient(180deg, #111827 0%, #05070A 100%);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid rgba(148,163,184,.22);
+    box-shadow: 0 3px 10px rgba(0,0,0,.45);
+    text-align: center;
+    overflow: hidden;
+}
+
+.gauge-container {
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+}
+
+.gauge-container svg {
+    display: block;
+    width: 100%;
+    height: 190px;
+    max-height: 22vh;
+}
+
+.capacity-chart-box {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0 !important;
+    padding: 6px 8px 4px;
+    overflow: hidden;
+
+    background: linear-gradient(180deg, #111827 0%, #05070A 100%);
+    border-radius: 8px;
+    border: 1px solid rgba(148,163,184,.22);
+    box-shadow: 0 3px 10px rgba(0,0,0,.45);
+}
+
+.capacity-chart-box h2 {
+    margin: 0 0 4px !important;
+    padding: 0 !important;
+    color: #F8FAFC;
+    font-size: 14px;
+    line-height: 1.1;
+    text-align: center;
+}
+
+.capacity-chart-box canvas {
+    display: block;
+    width: 100% !important;
+    height: calc(100% - 20px) !important;
+}
+
+</style>
+
+
 </head>
+
 <body class="page-stations">
+<div id="layout-container"></div>
 
-    <div id="layout-container"></div>
+<main class="page-content capacity-wrap">
+    <h1 class="capacity-title">
+        CÔNG SUẤT HOẠT ĐỘNG THEO GIẤY PHÉP CỦA BỘ TÀI NGUYÊN VÀ MÔI TRƯỜNG
+    </h1>
 
-    <main class="page-content">
-        <h1 style="text-align: center; margin-top: 50px; color: #0369a1;">
-            TRANG DỮ LIỆU GIẤY PHÉP - TRẠM GIÁM SÁT CẤP NƯỚC CÀ MAU
-        </h1>
-    </main>
+    <div class="gauge-grid" id="gaugeGrid"></div>
 
-    <script src="/shared/layout.js"></script>
-    <script src="/shared/nav.js"></script>
-    <script src="/shared/header.js"></script>
+    <div class="capacity-chart-box">
+        <h2>BIỂU ĐỒ TỔNG LƯU LƯỢNG 4 CÔNG TRÌNH</h2>
+        <canvas id="capacityChart"></canvas>
+    </div>
+</main>
+
+<script src="/shared/layout.js"></script>
+<script src="/shared/nav.js"></script>
+<script src="/shared/header.js"></script>
+
+<script>
+const STATION_CFG = {
+    username: "capnuoccamau",
+    password: "Qu@nTr@c2121",
+    tokenUrl: "https://iot.monre.gov.vn/portal/sharing/rest/generateToken",
+    dataUrl: "https://iot.monre.gov.vn/server/rest/services/Hosted/TNN_BIGDATA_EVENT_NEW/FeatureServer/0/query",
+    where: "(congtrinh='CAPNUOCCAMAU1' OR congtrinh='CONGTYCOPHANCAPNUOCC' OR congtrinh='NHAMAYCAPNUOCSO1' OR congtrinh='CAPNUOCCAMAUSO2')",
+    proxies: [
+        "https://corsproxy.io/?",
+        "https://api.allorigins.win/raw?url=",
+        "https://proxy.cors.sh/"
+    ],
+    refreshMs: 300000
+};
+
+const GAUGES = [
+    { id: "gauge1", title: "CAPNUOCCAMAU1", congtrinh: "CAPNUOCCAMAU1", max: 5000 },
+    { id: "gauge2", title: "NHAMAYCAPNUOCSO1", congtrinh: "NHAMAYCAPNUOCSO1", max: 5000 },
+    { id: "gauge3", title: "CAPNUOCCAMAUSO2", congtrinh: "CAPNUOCCAMAUSO2", max: 5000 },
+    { id: "gauge4", title: "CONGTYCOPHANCAPNUOCC", congtrinh: "CONGTYCOPHANCAPNUOCC", max: 5000 }
+];
+
+const CIRC = 628.3185307179587;
+const ARC = 471.23889803846896;
+
+let _cachedToken = null;
+let _tokenExpiry = 0;
+let capacityChart = null;
+
+function normKey(v) {
+    return String(v || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/gi, "_")
+        .replace(/^_+|_+$/g, "")
+        .toLowerCase();
+}
+
+function fmtTime(epoch) {
+    const d = new Date(Number(epoch));
+    return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+
+async function proxyFetch(url, options = {}) {
+    let lastErr;
+
+    for (const proxy of STATION_CFG.proxies) {
+        const pUrl = proxy + encodeURIComponent(url);
+
+        try {
+            const res = await fetch(pUrl, {
+                ...options,
+                signal: AbortSignal.timeout(12000)
+            });
+
+            if (res.ok) return res;
+            lastErr = new Error(`HTTP ${res.status}`);
+        } catch (err) {
+            lastErr = err;
+        }
+    }
+
+    throw lastErr || new Error("Tất cả proxy thất bại");
+}
+
+async function getToken() {
+    if (_cachedToken && Date.now() < _tokenExpiry) return _cachedToken;
+
+    const body = new URLSearchParams({
+        username: STATION_CFG.username,
+        password: STATION_CFG.password,
+        referer: "https://iot.monre.gov.vn",
+        f: "json",
+        expiration: "60",
+        client: "referer"
+    });
+
+    const res = await proxyFetch(STATION_CFG.tokenUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString()
+    });
+
+    const data = await res.json();
+
+    if (data?.token) {
+        _cachedToken = data.token;
+        _tokenExpiry = Date.now() + 55 * 60 * 1000;
+        return _cachedToken;
+    }
+
+    throw new Error(data?.error?.message || "Không nhận được token");
+}
+
+function createGauge(g) {
+    return `
+    <div class="gauge-box">
+        <div class="gauge-container">
+            <svg viewBox="35 28 230 260" preserveAspectRatio="xMidYMid meet">
+                <g transform="rotate(135,150,175)">
+                    <circle r="100" cx="150" cy="175" fill="#0D0D0D"></circle>
+                    <circle r="100" cx="150" cy="175" stroke="#294273" stroke-width="20"
+                        stroke-linecap="round" stroke-dasharray="${ARC} ${CIRC}" fill="none"></circle>
+                    <circle id="${g.id}-progress" r="100" cx="150" cy="175" stroke="#8BC34A"
+                        stroke-width="21" stroke-linecap="round" stroke-dasharray="0 ${CIRC}"
+                        fill="none" style="transition: stroke-dasharray 0.5s ease-out;"></circle>
+                    <circle r="85" cx="150" cy="175" stroke="#F2F2F2" stroke-width="2"
+                        stroke-dasharray="399 533" fill="none"></circle>
+                </g>
+
+                <g id="${g.id}-needle"
+                    style="transform-origin:150px 175px; transition:transform .5s ease-out;">
+                    <polygon points="150,172 240,175 150,178" fill="#0D0D0D"></polygon>
+                    <circle cx="150" cy="175" r="12" fill="#CCD0D9"></circle>
+                    <circle cx="150" cy="175" r="5" fill="#0D0D0D"></circle>
+                </g>
+
+                <text fill="#FFFFFF" font-size="20" font-weight="700" font-family="Arial">
+                    <tspan x="150" y="55" text-anchor="middle">${g.title}</tspan>
+                </text>
+                <text fill="#F2F2F2" font-size="18" font-family="Arial">
+                    <tspan x="150" y="210" text-anchor="middle">m³/h</tspan>
+                </text>
+                <text fill="#FFFFFF" font-size="28" font-weight="700" font-family="Arial">
+                    <tspan id="${g.id}-value" x="150" y="255" text-anchor="middle">0.00</tspan>
+                </text>
+            </svg>
+        </div>
+        
+    </div>`;
+}
+
+function renderGauges() {
+    document.getElementById("gaugeGrid").innerHTML = GAUGES.map(createGauge).join("");
+}
+
+function updateGauge(id, value, max) {
+    const ratio = Math.max(0, Math.min(value / max, 1));
+    const dash = ARC * ratio;
+    const angle = 135 + ratio * 270;
+
+    document.getElementById(`${id}-progress`).setAttribute("stroke-dasharray", `${dash} ${CIRC}`);
+    document.getElementById(`${id}-needle`).style.transform = `rotate(${angle}deg)`;
+    document.getElementById(`${id}-value`).textContent =
+        Number(value || 0).toLocaleString("vi-VN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+}
+
+function initCapacityChart() {
+    const ctx = document.getElementById("capacityChart");
+
+    capacityChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: GAUGES.map(g => ({
+                label: g.congtrinh,
+                data: [],
+                tension: 0.35,
+                fill: false,
+                pointRadius: 3,
+                borderWidth: 2
+            }))
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+                legend: { labels: { color: "#fff" } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: ${Number(ctx.raw || 0).toFixed(2)} m³/h`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: "#fff", maxRotation: 0 },
+                    grid: { color: "rgba(255,255,255,0.12)" }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: "#fff" },
+                    grid: { color: "rgba(255,255,255,0.12)" },
+                    title: { display: true, text: "m³/h", color: "#fff" }
+                }
+            }
+        }
+    });
+}
+
+function setChartRows(rows) {
+    capacityChart.data.labels = rows.map(r => r.label);
+
+    GAUGES.forEach((g, idx) => {
+        capacityChart.data.datasets[idx].data = rows.map(r => Number(r[g.congtrinh] || 0));
+    });
+
+    capacityChart.update();
+}
+
+function groupHistoryToChartRows(features) {
+    const bucketMap = new Map();
+
+    features.forEach(f => {
+        const a = f.attributes || {};
+        const congtrinh = a.congtrinh || "";
+        const chiSo = normKey(a.chiso || a.parameter || "");
+        const tram = normKey(a.tram || a.station || "");
+        const ts = Number(a.thoigiannhan || a.thoigiando || 0);
+        const val = Number(a.giatri || 0);
+
+        if (!ts || !tram || chiSo !== "luuluong") return;
+        if (!GAUGES.some(g => g.congtrinh === congtrinh)) return;
+
+        const d = new Date(ts);
+
+        d.setMinutes(Math.floor(d.getMinutes() / 60) * 60, 0, 0);
+
+        const bucket = d.getTime();
+        const stationKey = `${bucket}_${congtrinh}_${tram}`;
+
+        if (!bucketMap.has(bucket)) {
+            const row = { ts: bucket, label: fmtTime(bucket), _stations: new Map() };
+            GAUGES.forEach(g => row[g.congtrinh] = 0);
+            bucketMap.set(bucket, row);
+        }
+
+        const row = bucketMap.get(bucket);
+
+        if (!row._stations.has(stationKey)) {
+            row._stations.set(stationKey, true);
+            row[congtrinh] += Number.isNaN(val) ? 0 : val;
+        }
+    });
+
+    return [...bucketMap.values()]
+        .sort((a, b) => a.ts - b.ts)
+        .slice(-48)
+        .map(r => {
+            delete r._stations;
+            return r;
+        });
+}
+
+async function fetchHistoryChartData(token) {
+    // const from = Date.now() - 48 * 60 * 60 * 1000;
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - 1); // lùi 1 ngày
+    fromDate.setHours(0, 0, 0, 0);            // 00:00:00
+    const from = fromDate.getTime();
+
+    const where = `${STATION_CFG.where} AND thoigiannhan >= ${from}`;
+
+    const params = new URLSearchParams({
+        f: "json",
+        where,
+        outFields: "*",
+        orderByFields: "thoigiannhan ASC",
+        resultRecordCount: "2000",
+        returnGeometry: "false",
+        token
+    });
+
+    const res = await proxyFetch(`${STATION_CFG.dataUrl}?${params.toString()}`);
+    const data = await res.json();
+
+    if (data?.error) throw new Error(data.error.message);
+
+    const rows = groupHistoryToChartRows(data.features || []);
+    setChartRows(rows);
+
+    console.log("Chart rows:", rows);
+}
+
+async function fetchFlowData() {
+    const token = await getToken();
+
+    const params = new URLSearchParams({
+        f: "json",
+        where: STATION_CFG.where,
+        outFields: "*",
+        orderByFields: "thoigiannhan DESC",
+        resultRecordCount: "200",
+        returnGeometry: "false",
+        token
+    });
+
+    const res = await proxyFetch(`${STATION_CFG.dataUrl}?${params.toString()}`);
+    const data = await res.json();
+
+    if (data?.error) throw new Error(data.error.message);
+
+    const latestByTram = new Map();
+
+    (data.features || []).forEach(f => {
+        const a = f.attributes || {};
+        const congtrinh = a.congtrinh || "";
+        const tram = normKey(a.tram || a.station || "");
+        const chiSo = normKey(a.chiso || a.parameter || "");
+
+        if (!tram || chiSo !== "luuluong") return;
+
+        const key = `${congtrinh}_${tram}`;
+
+        if (!latestByTram.has(key)) {
+            latestByTram.set(key, {
+                congtrinh,
+                tram,
+                flow: Number(a.giatri || 0)
+            });
+        }
+    });
+
+    const totals = {};
+    GAUGES.forEach(g => totals[g.congtrinh] = 0);
+
+    latestByTram.forEach(item => {
+        if (item.congtrinh in totals && !Number.isNaN(item.flow)) {
+            totals[item.congtrinh] += item.flow;
+        }
+    });
+
+    GAUGES.forEach(g => updateGauge(g.id, totals[g.congtrinh] || 0, g.max));
+
+    console.log("Capacity totals:", totals);
+}
+
+async function initCapacityPage() {
+    renderGauges();
+    initCapacityChart();
+
+    try {
+        const token = await getToken();
+
+        await fetchFlowData();
+        await fetchHistoryChartData(token);
+    } catch (err) {
+        console.error(err);
+        alert("Không tải được dữ liệu công suất: " + err.message);
+    }
+
+    setInterval(async () => {
+        try {
+            const token = await getToken();
+            await fetchFlowData();
+            await fetchHistoryChartData(token);
+        } catch (err) {
+            console.error(err);
+        }
+    }, STATION_CFG.refreshMs);
+}
+
+initCapacityPage();
+</script>
 </body>
 </html>

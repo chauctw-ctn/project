@@ -1,7 +1,7 @@
 {
   "name": "iot-system",
   "version": "1.0.0",
-  "description": "",
+  "description": "project/\r ├── .gitignore\r ├── check-db.js\r ├── index.js\r ├── package-lock.json\r ├── package.json\r ├── README.md\r ├── config/\r │   └── loginconfig.json\r ├── data/\r │   └── mysql.db\r ├── public/\r │   ├── capacity.html\r │   ├── history.html\r │   ├── index.html\r │   ├── login.html\r │   ├── logo.png\r │   ├── monre.html\r │   ├── station.html\r │   ├── water-quality.html\r │   ├── assets/\r │   ├── login/\r │   ├── main/\r │   └── shared/\r └── src/\r     ├── cache.js\r     ├── api/\r     ├── core/\r     ├── db/\r     └── sources/\r ```",
   "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
@@ -29,5 +29,13 @@
     "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
     "sqlite3": "^6.0.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chauctw-ctn/project.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chauctw-ctn/project/issues"
+  },
+  "homepage": "https://github.com/chauctw-ctn/project#readme"
 }
