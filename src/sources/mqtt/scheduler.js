@@ -1,5 +1,6 @@
 "use strict";
 
+const { saveLatest } = require("../latest-store");
 const { connect, subscribe, onMessage } = require("./client");
 const { openDb, ensureTable, insertRows, closeDb } = require("../../db/writer");
 
@@ -98,6 +99,8 @@ function scheduleMqttJobs(overrides = {}) {
 
   onMessage(client, (stationPayload) => {
     console.log("[MQTT][DATA]", JSON.stringify(stationPayload));
+
+    saveLatest("mqtt", stationPayload.mqtt_id, stationPayload);
 
     stationBuffer.set(stationPayload.mqtt_id, stationPayload);
 

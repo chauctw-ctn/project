@@ -1,0 +1,19 @@
+.scada-gauge {
+    width: 350px;
+    background: #0B2A44;
+    padding: 0px;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.scada-gauge-container {
+    width: 100%;
+    max-width: 250px;
+    margin: 0 auto;
+}
+
+.scada-gauge svg {
+    width: 100%;
+    height: auto;
+}

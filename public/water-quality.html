@@ -7,12 +7,9 @@
 
     <link rel="stylesheet" href="/assets/style.css">
     <link rel="stylesheet" href="/shared/layout.css">
+    <link rel="stylesheet" href="/shared/gauge.css">
 
     <style>
-        :root {
-            --header-height: 70px;
-        }
-
         * {
             box-sizing: border-box;
         }
@@ -21,7 +18,6 @@
         body {
             margin: 0;
             width: 100%;
-            height: 100%;
             overflow: hidden;
         }
 
@@ -29,13 +25,22 @@
             display: flex;
             flex-direction: column;
 
-            width: 100%;
-            height: calc(100vh - var(--header-height));
-            margin-top: var(--header-height);
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-h);
 
             padding: 0;
             overflow: hidden;
             background: #ffffff;
+
+            transition: margin-left .25s ease;
+        }
+
+        body.sidebar-expanded .page-content {
+            margin-left: var(--sidebar-width-expanded);
+        }
+
+        body.sidebar-hidden .page-content {
+            margin-left: 0;
         }
 
         .title-section {
@@ -55,15 +60,36 @@
             line-height: 1.3;
         }
 
-        .image-section {
-            flex: 1 1 auto;
-            min-height: 0;
-            width: 100%;
+        .gauge-section {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(240px, 1fr));
+            gap: 10px;
 
-            background-image: url('/baseImageScada.png');
-            background-size: 100% 100%;
-            background-position: left center;
-            background-repeat: no-repeat;
+            width: 100%;
+            padding: 10px;
+
+            overflow-x: auto;
+            overflow-y: hidden;
+
+            background: #ffffff;
+        }
+
+        .gauge-item {
+            min-width: 240px;
+            display: flex;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .page-content,
+            body.sidebar-expanded .page-content,
+            body.sidebar-hidden .page-content {
+                margin-left: 0;
+            }
+
+            .gauge-section {
+                grid-template-columns: repeat(6, minmax(220px, 1fr));
+            }
         }
     </style>
 </head>
@@ -80,13 +106,126 @@
             </h1>
         </div>
 
-        <div class="image-section"></div>
+        <div class="gauge-section">
+            <div class="gauge-item" id="Gauge_01"></div>
+            <div class="gauge-item" id="Gauge_02"></div>
+            <div class="gauge-item" id="Gauge_03"></div>
+            <div class="gauge-item" id="Gauge_04"></div>
+            <div class="gauge-item" id="Gauge_05"></div>
+            <div class="gauge-item" id="Gauge_06"></div>
+        </div>
 
     </main>
 
     <script src="/shared/layout.js"></script>
     <script src="/shared/nav.js"></script>
     <script src="/shared/header.js"></script>
+    <script src="/shared/gauge.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const valueGauge_01 = new ScadaGauge("Gauge_01", {
+            min: 0,
+            max: 2000,
+            title: "TỔNG CÔNG SUẤT",
+            unit: "m³/h",
+            color: "#8BC34A",
+            decimals: 0,            
+            api: {
+                url: "/api/sources/total-flow-all"
+            }
+        });
+        const valueGauge_02 = new ScadaGauge("Gauge_02", {
+            min: 0,
+            max: 500,
+            title: "GP35-BTNMT",
+            unit: "m³/h",
+            color: "#8BC34A",
+            decimals: 0,            
+            api: {
+                type: "sum",
+                source: "scada",
+                parameter: "flow",
+                stationIds: [
+                    "gs15",
+                    "gs18",
+                    "tb12",
+                    "gs4nm2",
+                    "gs5nm1"
+                ]
+            }
+        });
+        const valueGauge_03 = new ScadaGauge("Gauge_03", {
+             min: 0,
+            max: 500,
+            title: "GP36-BTNMT",
+            unit: "m³/h",
+            color: "#8BC34A",
+            decimals: 0,            
+            api: {
+                type: "sum",
+                source: "scada",
+                parameter: "flow",
+                stationIds: [
+                    "gs4nm2",
+                    "gs5nm1"
+                ]
+            }
+        });
+        const valueGauge_04 = new ScadaGauge("Gauge_04", {
+            min: 0,
+            max: 500,
+            title: "GP91-BTNMT",
+            unit: "m³/h",
+            color: "#8BC34A",
+            decimals: 0,
+            api: {
+                type: "sum",
+                source: "scada",
+                parameter: "flow",
+                stationIds: [
+                    "gs4nm2",
+                    "gs5nm1"
+                ]
+            }
+        });
+        const valueGauge_05 = new ScadaGauge("Gauge_05", {
+             min: 0,
+            max: 500,
+            title: "GP393-BTNMT",
+            unit: "m³/h",
+            color: "#8BC34A",
+            decimals: 0,
+            api: {
+                type: "sum",
+                source: "scada",
+                parameter: "flow",
+                stationIds: [
+                    "gs4nm2",
+                    "gs5nm1"
+                ]
+            }
+        });
+        const valueGauge_06 = new ScadaGauge("Gauge_06", {
+            min: 0,
+            max: 500,
+            title: "GP45-STNMT",
+            unit: "m³/h",
+            color: "#8BC34A",
+            decimals: 0,
+            api: {
+                type: "sum",
+                source: "scada",
+                parameter: "flow",
+                stationIds: [
+                    "gs4nm2",
+                    "gs5nm1"
+                ]
+            }
+        });
+
+    });
+    </script>
 
 </body>
 </html>

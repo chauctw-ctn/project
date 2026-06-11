@@ -1,5 +1,5 @@
 "use strict";
-
+const { saveLatest } = require("../latest-store");
 const { fetchScadaData } = require("./client");
 const { normalizeStationData, normalizeToNdjson, formatTimestamp, shouldPersistNow } = require("../../core/normalizer");
 const { processNdjson } = require("../../db/processor");
@@ -28,6 +28,7 @@ function scheduleFetchEveryThirtySeconds(overrides = {}) {
 			const normalized = normalizeStationData(result.data, ts);
 			console.log(`[SCADA][FETCH] ${ts} records=${result.data.length}`);			
 			Object.values(normalized).forEach((payload) => {
+				saveLatest("scada", payload.scada_id, payload);
 				console.log(`[SCADA][DATA] ${JSON.stringify(payload)}`);
 			});
 			if (typeof onFetch === "function") onFetch(normalized, ts);

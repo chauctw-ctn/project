@@ -1,6 +1,8 @@
 // src/sources/tva/scheduler.js
 "use strict";
 
+const { saveLatest } = require("../latest-store");
+
 const { fetchTVAData, normalizeStations, formatTimestamp } = require("./client");
 const { openDb, ensureTable, insertRows, closeDb } = require("../../db/writer");
 
@@ -47,6 +49,7 @@ function scheduleTVAJobs(overrides = {}) {
             console.log(`[TVA][FETCH] ${formatTimestamp()} active stations: ${latestNormalized.length}`);
 
             latestNormalized.forEach((payload) => {
+                saveLatest("tva", payload.tva_id, payload);
                 console.log(`[TVA][DATA] ${JSON.stringify(payload)}`);
             });
 

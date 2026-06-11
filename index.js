@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 
 const authRoutes = require("./src/api/routes");
 const sources = require("./src/sources");
+const sourcesApi = require("./src/api/sources");
 
 
 async function main() {
@@ -38,6 +39,10 @@ async function main() {
   } catch (err) {
     console.error("❌ Lỗi khi khởi chạy sources:", err);
   }
+
+  // Đăng ký router API cho MQTT
+  app.use("/api/sources", sourcesApi);
+  console.log("Sources API registered: /api/sources");
 
   /*
    * 2. API AUTH
