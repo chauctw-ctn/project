@@ -1,4 +1,4 @@
-//src/services/monreFetch.js
+// src/services/monreFetch.js
 const axios = require("axios");
 const { processNdjson } = require("../../db/processor");
 
@@ -23,6 +23,13 @@ const MONRE_PARAMETER_MAP = {
 	tongluuluong: "totalIndex"
 };
 
+const MONRE_LICENSE_MAP = {
+	NHAMAYCAPNUOCSO1: "STATION_GP393",
+	CONGTYCOPHANCAPNUOCC: "STATION_GP391",
+	CAPNUOCCAMAU1: "STATION_GP35",
+	CAPNUOCCAMAUSO2: "STATION_GP36"
+};
+
 let cachedToken = null;
 let tokenExpiry = null;
 
@@ -37,13 +44,11 @@ function normalizeKey(value) {
 
 function formatTimestamp(date = new Date()) {
 	const pad = (value) => String(value).padStart(2, "0");
-	const year = date.getFullYear();
-	const month = pad(date.getMonth() + 1);
-	const day = pad(date.getDate());
-	const hours = pad(date.getHours());
-	const minutes = pad(date.getMinutes());
-	const seconds = pad(date.getSeconds());
-	return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+		date.getDate()
+	)} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
+		date.getSeconds()
+	)}`;
 }
 
 function shouldPersistNow(date = new Date(), intervalMinutes = 5) {
@@ -51,13 +56,11 @@ function shouldPersistNow(date = new Date(), intervalMinutes = 5) {
 }
 
 function parseEpoch(value) {
-	if (typeof value === "number") {
-		return new Date(value);
-	}
+	if (typeof value === "number") return new Date(value);
+
 	const asNumber = Number(value);
-	if (!Number.isNaN(asNumber)) {
-		return new Date(asNumber);
-	}
+	if (!Number.isNaN(asNumber)) return new Date(asNumber);
+
 	return null;
 }
 
@@ -107,6 +110,7 @@ async function fetchMonreData(overrides = {}) {
 	});
 
 	const features = response.data.features || [];
+
 	if (process.env.MONRE_LOG_RAW === "1" || overrides.logRaw === true) {
 		console.log(`[MONRE][RAW] ${formatTimestamp()} features ${features.length}`);
 		features.forEach((feature) => {
@@ -122,12 +126,12 @@ function normalizeMonreFeatures(features) {
 
 	features.forEach((feature) => {
 		const attr = feature.attributes || {};
+
 		const stationName = normalizeKey(attr.tram || attr.station || "");
 		const rawParameter = normalizeKey(attr.chiso || attr.parameter || "");
 		const parameterName = MONRE_PARAMETER_MAP[rawParameter] || rawParameter;
-		if (!stationName || !parameterName) {
-			return;
-		}
+
+		if (!stationName || !parameterName) return;
 
 		const receiveTime = parseEpoch(attr.thoigiannhan);
 		const measurementTime = parseEpoch(attr.thoigiando);
@@ -145,17 +149,57 @@ function normalizeMonreFeatures(features) {
 	return Array.from(latestByStation.values());
 }
 
+function logStationsByLicense(features) {
+	const groups = {
+		STATION_GP393: new Set(),
+		STATION_GP391: new Set(),
+		STATION_GP35: new Set(),
+		STATION_GP36: new Set()
+	};
+
+	features.forEach((feature) => {
+		const attr = feature.attributes || {};
+
+		const congtrinh = String(attr.congtrinh || "")
+			.trim()
+			.toUpperCase();
+
+		const groupKey = MONRE_LICENSE_MAP[congtrinh];
+		if (!groupKey) return;
+
+		const stationName = normalizeKey(attr.tram || attr.station || "");
+		if (!stationName) return;
+
+		groups[groupKey].add(`monre_${stationName}`);
+	});
+
+	Object.entries(groups).forEach(([groupKey, stations]) => {
+		const stationList = Array.from(stations).sort();
+
+		console.log(`[${groupKey}]: ${stationList.length}`);
+		stationList.forEach((stationId, index) => {
+			console.log(`${index + 1}. ${stationId}`);
+		});
+		console.log("");
+	});
+}
+
 function normalizeToNdjson(payloads) {
 	return payloads.map((payload) => JSON.stringify(payload)).join("\n");
 }
 
 async function debugFetchMonre(overrides = {}) {
 	const features = await fetchMonreData(overrides);
+
+	logStationsByLicense(features);
+
 	const normalized = normalizeMonreFeatures(features);
+
 	console.log(`[MONRE][DEBUG] Total stations ${normalized.length}`);
 	normalized.forEach((payload) => {
 		console.log(`[MONRE][DATA] ${JSON.stringify(payload)}`);
 	});
+
 	return normalized;
 }
 
@@ -165,17 +209,22 @@ function scheduleFetchEveryThirtySeconds(overrides = {}) {
 	const fetchIntervalMs = Number(overrides.fetchIntervalMs) || 30000;
 
 	const runFetch = async () => {
-		if (inFlight) {
-			return;
-		}
+		if (inFlight) return;
+
 		inFlight = true;
+
 		try {
 			const features = await fetchMonreData(overrides);
 			const normalized = normalizeMonreFeatures(features);
+
 			console.log(`[MONRE][FETCH] ${formatTimestamp()} stations ${normalized.length}`);
+
+			logStationsByLicense(features);
+
 			normalized.forEach((payload) => {
 				console.log(`[MONRE][DATA] ${JSON.stringify(payload)}`);
 			});
+
 			if (typeof onFetch === "function") {
 				onFetch(normalized);
 			}
@@ -192,29 +241,26 @@ function scheduleFetchEveryThirtySeconds(overrides = {}) {
 
 function scheduleEveryFiveMinutes(overrides = {}) {
 	let lastRunKey = null;
+
 	const getLatestNormalized = overrides.getLatestNormalized;
 	const saveIntervalMinutes = Number(overrides.saveIntervalMinutes) || 5;
 	const tickIntervalMs = Number(overrides.tickIntervalMs) || 1000;
 
 	const tick = () => {
 		const now = new Date();
-		const minute = now.getMinutes();
-		if (minute % saveIntervalMinutes !== 0) {
-			return;
-		}
 
-		const key = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}-${minute}`;
-		if (key === lastRunKey) {
-			return;
-		}
+		if (!shouldPersistNow(now, saveIntervalMinutes)) return;
+
+		const key = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
+		if (key === lastRunKey) return;
 
 		lastRunKey = key;
-		if (typeof getLatestNormalized !== "function") {
-			return;
-		}
+
+		if (typeof getLatestNormalized !== "function") return;
 
 		const cached = getLatestNormalized();
 		const saveTs = formatTimestamp(now);
+
 		if (!cached || cached.length === 0) {
 			console.log(`[MONRE][SAVE] ${saveTs} skipped (no cached data)`);
 			return;
@@ -222,6 +268,7 @@ function scheduleEveryFiveMinutes(overrides = {}) {
 
 		const normalized = cached.map((payload) => ({ ...payload }));
 		const ndjson = normalizeToNdjson(normalized);
+
 		processNdjson(ndjson, overrides.db ? { dbPath: overrides.db } : {})
 			.then(({ inserted }) => {
 				console.log(`[MONRE][SAVE] ${saveTs} inserted ${inserted} rows`);
@@ -241,11 +288,13 @@ module.exports = {
 	normalizeMonreFeatures,
 	formatTimestamp,
 	scheduleFetchEveryThirtySeconds,
-	scheduleEveryFiveMinutes
+	scheduleEveryFiveMinutes,
+	logStationsByLicense
 };
 
 if (require.main === module) {
 	const logRaw = process.env.MONRE_LOG_RAW === "1";
+
 	debugFetchMonre({ logRaw })
 		.then(() => {
 			console.log("[MONRE][DEBUG] Completed");

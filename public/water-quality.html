@@ -143,16 +143,7 @@
             color: "#8BC34A",
             decimals: 0,            
             api: {
-                type: "sum",
-                source: "scada",
-                parameter: "flow",
-                stationIds: [
-                    "gs15",
-                    "gs18",
-                    "tb12",
-                    "gs4nm2",
-                    "gs5nm1"
-                ]
+                url: "/api/sources/total-flow-gp35"
             }
         });
         const valueGauge_03 = new ScadaGauge("Gauge_03", {
@@ -163,30 +154,18 @@
             color: "#8BC34A",
             decimals: 0,            
             api: {
-                type: "sum",
-                source: "scada",
-                parameter: "flow",
-                stationIds: [
-                    "gs4nm2",
-                    "gs5nm1"
-                ]
+                url: "/api/sources/total-flow-gp36"
             }
         });
         const valueGauge_04 = new ScadaGauge("Gauge_04", {
             min: 0,
             max: 500,
-            title: "GP91-BTNMT",
+            title: "GP391-BTNMT",
             unit: "m³/h",
             color: "#8BC34A",
-            decimals: 0,
+            decimals: 0,            
             api: {
-                type: "sum",
-                source: "scada",
-                parameter: "flow",
-                stationIds: [
-                    "gs4nm2",
-                    "gs5nm1"
-                ]
+                url: "/api/sources/total-flow-gp391"
             }
         });
         const valueGauge_05 = new ScadaGauge("Gauge_05", {
@@ -195,35 +174,22 @@
             title: "GP393-BTNMT",
             unit: "m³/h",
             color: "#8BC34A",
-            decimals: 0,
+            decimals: 0,                 
             api: {
-                type: "sum",
-                source: "scada",
-                parameter: "flow",
-                stationIds: [
-                    "gs4nm2",
-                    "gs5nm1"
-                ]
+                url: "/api/sources/total-flow-gp393"
             }
         });
         const valueGauge_06 = new ScadaGauge("Gauge_06", {
             min: 0,
             max: 500,
-            title: "GP45-STNMT",
+            title: "GP-STNMT",
             unit: "m³/h",
             color: "#8BC34A",
-            decimals: 0,
+            decimals: 0,            
             api: {
-                type: "sum",
-                source: "scada",
-                parameter: "flow",
-                stationIds: [
-                    "gs4nm2",
-                    "gs5nm1"
-                ]
+                url: "/api/sources/total-flow-gpstn"
             }
         });
-
     });
     </script>
 

@@ -5,7 +5,7 @@ const rows = db.prepare(`
     SELECT *
     FROM station_readings
     ORDER BY id DESC
-    LIMIT 100
+    LIMIT 500
 `).all();
 console.table(rows);
 db.close();
